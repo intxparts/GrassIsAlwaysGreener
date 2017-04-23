@@ -3,29 +3,53 @@ import os
 
 pygame.init()
 
-ASSETS_FOLDER = os.path.join(os.getcwd(), 'Assets')
-
 
 def get_asset_file(filename):
     return os.path.join(ASSETS_FOLDER, filename)
+
+
+def get_image_at(spritesheet, rect):
+    image = pygame.Surface(rect.size, pygame.SRCALPHA, 32).convert_alpha()
+    image.blit(spritesheet, (0, 0), rect)
+    # image = pygame.transform.scale2x(image)
+    return image
+
+
+# initialize the display for drawing to the screen
+display = pygame.display.set_mode([800, 600], pygame.DOUBLEBUF, 32)
+ASSETS_FOLDER = os.path.join(os.getcwd(), 'Assets')
+SPRITE_SHEET = pygame.image.load(get_asset_file('goats.png')).convert_alpha()
 
 
 class Color:
     STEEL_BLUE = (95, 158, 160)
     BLACK = (0, 0, 0)
     AWESOME_GRAY = (49, 49, 49)
+    LIGHT_SKY_BLUE = (135, 206, 250)
 
 
-class Player:
-    pass
+class Goat:
+
+    STANDING_NORMAL = pygame.transform.scale2x(get_image_at(SPRITE_SHEET, pygame.rect.Rect(26, 31, 16, 12)))
+
+    def __init__(self, start_position):
+        self.__position = start_position
+        self.__aabb = 0
+
+    @property
+    def position(self):
+        return self.__position
+
+    def update(self):
+        pass
+
+    def render(self, display):
+        display.blit(Goat.STANDING_NORMAL, self.__position)
 
 
 def run_game():
     pygame.display.set_caption('The Grass is Always Greener - Ludum Dare 38 - Theme: A Small World')
     # pygame.display.set_icon(Player.SPRITE_DEATH)
-
-    # initialize the display for drawing to the screen
-    display = pygame.display.set_mode([800, 600], pygame.DOUBLEBUF, 32)
 
     # initialize the mixer for sound to work
     # pygame.mixer.music.load(get_asset_file('background_music.ogg'))
@@ -33,14 +57,13 @@ def run_game():
 
     # clock for keeping track of time, ticks, and frames per second
     clock = pygame.time.Clock()
-
+    goat = Goat((250, 250))
     done = False
     while not done:
         clock.tick(60)
-        display.fill(Color.BLACK)
+        display.fill(Color.LIGHT_SKY_BLUE)
 
         # handle input
-        print('handle input')
         events = pygame.event.get()
 
         # handle input
@@ -53,21 +76,23 @@ def run_game():
                 if event.key == pygame.K_ESCAPE:
                     done = True
                 if event.key == pygame.K_a:
-                    pass  # move left
+                    print('a pressed')
                 if event.key == pygame.K_d:
-                    pass  # move right
+                    print('d pressed')
                 if event.key == pygame.K_e:
-                    pass  # eat
+                    print('e pressed')
                 if event.key == pygame.K_SPACE:
-                    pass  # jump
+                    print('space pressed')
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_a:
-                    pass
+                    print('a released')
                 if event.key == pygame.K_d:
-                    pass
+                    print('d released')
+                if event.key == pygame.K_e:
+                    print('e released')
                 if event.key == pygame.K_SPACE:
-                    pass
+                    print('space released')
         # update
         # -- update player
         # -- update particles
@@ -78,7 +103,11 @@ def run_game():
         # -- render foreground
         # -- render grass
         # -- render player
+        goat.render(display)
+
         # -- render debug
+
+        pygame.display.flip()
 
 
 if __name__ == '__main__':
