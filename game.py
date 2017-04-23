@@ -32,6 +32,7 @@ class Color:
 class Wind:
     pass
 
+
 class Slab:
     def __init__(self, rect):
         self.rect = rect
@@ -162,6 +163,7 @@ class Goat:
         if self.__is_grounded and not grounded:
             self.__group_index = 2
             self.__sprite_index = 0
+            self.__frames = 0
         self.__is_grounded = grounded
 
     @property
@@ -191,24 +193,79 @@ class Goat:
 
     def update(self):
         self.__frames += 1
-        if self.__frames >= 12:
-            self.__sprite_index = (self.__sprite_index + 1) % len(self.__direction())
-            self.update_draw_position()
-            self.__frames = 0
+        frame_threshold = 12
+        if self.is_grounded and not self.is_moving_horizontally:
+            frame_threshold = 24
+
+        if self.is_grounded:
+            if self.__frames >= frame_threshold:
+                self.__sprite_index = (self.__sprite_index + 1) % len(self.__direction())
+                self.update_draw_position()
+                self.__frames = 0
+        else:
+            if self.velocity[1] < -0.9:
+                self.__sprite_index = 0
+            elif -0.9 <= self.velocity[1] <= 0.9:
+                self.__sprite_index = 1
+            else:
+                self.__sprite_index = 2
 
     def render(self, display):
-
         display.blit(self.__debug_surface, (self.rect.x, self.rect.y))
         display.blit(self.__sprite, (self.rect.x, self.rect.y))
 
 
 def is_entity_on_ground(entity, slabs):
     entity_rect = entity.rect.copy()
-    entity_rect.y += 2
+    entity_rect.bottom += 2
     for slab in slabs:
         if entity_rect.colliderect(slab.rect):
-            return True
+            if slab.rect.top <= entity_rect.bottom <= slab.rect.top + 3:
+                return True
     return False
+
+
+def check_collision_x(goat, entities):
+    for slab in entities:
+        # if there is a collision
+        if goat.rect.colliderect(slab.rect):
+
+            # player collides with a platform on their right
+            if slab.rect.left < goat.rect.right < slab.rect.right:
+                goat.rect.right = slab.rect.left
+
+            # player collides with a platform on their left
+            elif slab.rect.left < goat.rect.left < slab.rect.right:
+                goat.rect.left = slab.rect.right
+
+            goat.velocity[0] = 0
+
+
+def check_collision_y(goat, entities):
+    for slab in entities:
+        if goat.rect.colliderect(slab.rect) and goat.velocity[1]:
+            # player collides with a platform on their head
+            if slab.rect.top < goat.rect.top < slab.rect.bottom:
+                goat.rect.top = slab.rect.bottom
+
+            # player collides standing on a platform
+            elif slab.rect.top < goat.rect.bottom < slab.rect.bottom:
+                goat.rect.bottom = slab.rect.top
+
+            goat.velocity[1] = 0
+
+
+def handle_fallthrough_collision_x(goat, entities):
+    pass  # nothing to do here
+
+
+def handle_fallthrough_collision_y(goat, entities):
+    for slab in entities:
+        if goat.rect.colliderect(slab.rect) and goat.velocity[1] > 0:
+            # player collides standing on a platform
+            if slab.rect.top < goat.rect.bottom < slab.rect.top + 1:
+                goat.rect.bottom = slab.rect.top
+                goat.velocity[1] = 0
 
 
 def run_game():
@@ -224,15 +281,16 @@ def run_game():
     goat = Goat([15, 15])
     grass_left = Grass((15, 400))
     grass_right = Grass((780, 400))
+    fallthrough_slabs = [Slab(pygame.Rect(140, 215, 50, 10))]
     ground = Slab(pygame.Rect(0, 250, 800, 350))
     wall = Slab(pygame.Rect(400, 0, 15, 250))
-    slabs = [ground, wall]
+    slabs = [ground, wall, Slab(pygame.Rect(0, 230, 20, 10)), Slab(pygame.Rect(100, 210, 20, 10))]
     done = False
     while not done:
         clock.tick(60)
         display.fill(Color.LIGHT_SKY_BLUE)
 
-        goat.is_grounded = is_entity_on_ground(goat, slabs)
+        goat.is_grounded = is_entity_on_ground(goat, slabs) or is_entity_on_ground(goat, fallthrough_slabs)
         if goat.is_grounded:
             goat.velocity[0] = 0
 
@@ -258,7 +316,7 @@ def run_game():
                     print('e pressed')
                 if event.key == pygame.K_SPACE and goat.is_grounded:
                     goat.is_grounded = False
-                    goat.velocity[1] = -2
+                    goat.velocity[1] = -3
                     print('space pressed')
 
             if event.type == pygame.KEYUP:
@@ -277,46 +335,30 @@ def run_game():
 
             # goat is moving right
         if goat.is_moving_horizontally and goat.direction == 0:
-            goat.velocity[0] = 1
+            goat.velocity[0] = 2
         elif goat.is_moving_horizontally and goat.direction == 1:
-            goat.velocity[0] = -1
+            goat.velocity[0] = -2
         elif not goat.is_moving_horizontally:
             goat.velocity[0] = 0
 
-        if goat.velocity[1] == 0:
-            goat.velocity[1] = 1
+        if goat.is_grounded:
+            goat.velocity[1] = 0
         else:
             goat.velocity[1] += 0.15
 
+        # if goat.velocity[1] == 0:
+        #     goat.velocity[1] = 1
+        # else:
+        #     goat.velocity[1] += 0.15
+
         # update
         goat.rect.x += goat.velocity[0]
-        for slab in slabs:
-            # if there is a collision
-            if goat.rect.colliderect(slab.rect):
-
-                # player collides with a platform on their right
-                if slab.rect.left < goat.rect.right < slab.rect.right:
-                    goat.rect.right = slab.rect.left
-
-                # player collides with a platform on their left
-                elif slab.left < goat.rect.left < slab.rect.right:
-                    goat.rect.left = slab.rect.right
-
-                goat.velocity[0] = 0
+        check_collision_x(goat, slabs)
+        handle_fallthrough_collision_x(goat, fallthrough_slabs)
 
         goat.rect.y += goat.velocity[1]
-        for slab in slabs:
-            if goat.rect.colliderect(slab.rect):
-
-                # player collides with a platform on their head
-                if goat.velocity[1] < 0:
-                    goat.rect.top = slab.rect.bottom
-
-                # player collides standing on a platform
-                elif goat.velocity[1] > 0:
-                    goat.rect.bottom = slab.rect.top
-
-                goat.velocity[1] = 0
+        check_collision_y(goat, slabs)
+        handle_fallthrough_collision_y(goat, fallthrough_slabs)
 
         goat.position[0] = goat.rect.x
         goat.position[1] = goat.rect.bottom
@@ -329,6 +371,9 @@ def run_game():
         # render
         # -- render background
         for slab in slabs:
+            slab.render(display)
+
+        for slab in fallthrough_slabs:
             slab.render(display)
         # -- render foreground
         # -- render grass
