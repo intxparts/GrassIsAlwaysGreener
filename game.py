@@ -32,11 +32,66 @@ class Color:
 
 class Goat:
 
-    STANDING_NORMAL = pygame.transform.scale2x(get_image_at(SPRITE_SHEET, pygame.rect.Rect(26, 31, 16, 12)))
-    STANDING_NORMAL_LEFT = pygame.transform.flip(STANDING_NORMAL, True, False)
+    def generate_left_image_group(right_image_group):
+        left_image_group = []
+        for i in right_image_group:
+            left_image_group.append(pygame.transform.flip(i, True, False))
+        return left_image_group
+
+    def apply_image_transform(rect):
+        return pygame.transform.scale2x(get_image_at(SPRITE_SHEET, rect))
+
+    STANDING_NORMAL = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
+    STANDING_CROUCHED = apply_image_transform(pygame.rect.Rect(8, 32, 16, 11))
+
+    WALKING_TOGETHER = apply_image_transform(pygame.rect.Rect(44, 32, 14, 11))
+    WALKING_SEPARATE = apply_image_transform(pygame.rect.Rect(78, 31, 15, 12))
+
+    # FIX THESE
+    JUMPING_START = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
+    JUMPING_MID = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
+    JUMPING_END = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
+
+    EATING_STANDING = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
+    EATING_CROUCHED = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
+
+    FLOWER_STANDING = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
+    FLOWER_CROUCHED = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
+
+    GROUP_STANDING_RIGHT = [STANDING_NORMAL, STANDING_CROUCHED]
+    GROUP_STANDING_LEFT = generate_left_image_group(GROUP_STANDING_RIGHT)
+    GROUP_STANDING = [GROUP_STANDING_RIGHT, GROUP_STANDING_LEFT]
+    GROUP_JUMPING_RIGHT = [JUMPING_START, JUMPING_MID, JUMPING_END]
+    GROUP_JUMPING_LEFT = generate_left_image_group(GROUP_JUMPING_RIGHT)
+    GROUP_JUMPING = [GROUP_JUMPING_RIGHT, GROUP_JUMPING_LEFT]
+    GROUP_WALKING_RIGHT = [
+        STANDING_NORMAL,
+        WALKING_TOGETHER,
+        STANDING_CROUCHED,
+        WALKING_SEPARATE
+        ]
+    GROUP_WALKING_LEFT = generate_left_image_group(GROUP_WALKING_RIGHT)
+    GROUP_WALKING = [GROUP_WALKING_RIGHT, GROUP_WALKING_LEFT]
+    GROUP_EATING_RIGHT = [EATING_STANDING, EATING_CROUCHED]
+    GROUP_EATING_LEFT = generate_left_image_group(GROUP_EATING_RIGHT)
+    GROUP_EATING = [GROUP_EATING_RIGHT, GROUP_EATING_LEFT]
+    GROUP_FLOWER_RIGHT = [FLOWER_STANDING, FLOWER_CROUCHED]
+    GROUP_FLOWER_LEFT = generate_left_image_group(GROUP_FLOWER_RIGHT)
+    GROUP_FLOWER = [GROUP_FLOWER_RIGHT, GROUP_FLOWER_LEFT]
 
     def __init__(self, start_position):
         self.__position = start_position
+        self.__frames = 0
+        self.__group_index = 1
+        self.__direction_index = 0
+        self.__sprite_index = 0
+        self.__sprites = [
+            Goat.GROUP_STANDING,
+            Goat.GROUP_WALKING,
+            Goat.GROUP_JUMPING,
+            Goat.GROUP_EATING,
+            Goat.GROUP_FLOWER
+            ]
         self.image = Goat.STANDING_NORMAL
         self.rect = self.image.get_rect()
 
@@ -47,12 +102,25 @@ class Goat:
     def position(self):
         return self.__position
 
+    def __group(self):
+        return self.__sprites[self.__group_index]
+
+    def __direction(self):
+        return self.__group()[self.__direction_index]
+
+    def __sprite(self):
+        return self.__direction()[self.__sprite_index]
+
     def update(self):
         pass
 
     def render(self, display):
+        self.__frames += 1
+        if self.__frames >= 20:
+            self.__sprite_index = (self.__sprite_index + 1) % len(self.__direction())
+            self.__frames = 0
         display.blit(self.__debug_surface, self.__position)
-        display.blit(Goat.STANDING_NORMAL, self.__position)
+        display.blit(self.__sprite(), self.__position)
 
 
 def run_game():
