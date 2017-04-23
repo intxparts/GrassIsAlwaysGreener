@@ -22,6 +22,10 @@ SPRITE_SHEET = pygame.image.load(get_asset_file('goats.png')).convert_alpha()
 WORLD = pygame.image.load(get_asset_file('world.png'))
 
 
+def apply_image_transform(rect):
+    return pygame.transform.scale2x(get_image_at(SPRITE_SHEET, rect))
+
+
 class Color:
     STEEL_BLUE = (95, 158, 160)
     BLACK = (0, 0, 0)
@@ -47,17 +51,49 @@ class Slab:
 
 class Grass:
 
-    def __init__(self, position):
-        self.__sprites = []
+    ALIVE_1 = apply_image_transform(pygame.rect.Rect(48, 50, 21, 4))
+    ALIVE_2 = apply_image_transform(pygame.rect.Rect(76, 50, 21, 4))
+    ALIVE_3 = apply_image_transform(pygame.rect.Rect(104, 50, 21, 4))
+
+    DEAD_1 = apply_image_transform(pygame.rect.Rect(48, 58, 21, 4))
+    DEAD_2 = apply_image_transform(pygame.rect.Rect(76, 58, 21, 4))
+    DEAD_3 = apply_image_transform(pygame.rect.Rect(103, 58, 21, 4))
+
+    def __init__(self, position, alive):
+        self.__sprites = [
+            [Grass.ALIVE_1, Grass.ALIVE_2, Grass.ALIVE_3, Grass.ALIVE_2],
+            [Grass.DEAD_1, Grass.DEAD_2, Grass.DEAD_3, Grass.DEAD_2]
+            ]
         self.__sprite_index = 0
+        self.__living_index = 0
         self.__frames = 0
         self.position = position
+        self.is_alive = alive
+        self.is_windy = False
+
+    @property
+    def is_alive(self):
+        return self.__living_index == 0
+
+    @is_alive.setter
+    def is_alive(self, alive):
+        if alive:
+            self.__living_index = 0
+        else:
+            self.__living_index = 1
 
     def update(self):
-        pass
+        self.__frames += 1
+        frame_threshold = 12
+        if self.is_windy:
+            frame_threshold = 3
+        if self.__frames >= frame_threshold:
+            self.__sprite_index = (self.__sprite_index + 1) % len(self.__sprites[self.__living_index])
+            self.__frames = 0
 
     def render(self, display):
-        pass
+        display.blit(self.__sprites[self.__living_index][self.__sprite_index], self.position)
+
 
 class Goat:
 
@@ -67,8 +103,6 @@ class Goat:
             left_image_group.append(pygame.transform.flip(i, True, False))
         return left_image_group
 
-    def apply_image_transform(rect):
-        return pygame.transform.scale2x(get_image_at(SPRITE_SHEET, rect))
 
     STANDING_NORMAL = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
     STANDING_CROUCHED = apply_image_transform(pygame.rect.Rect(8, 32, 16, 11))
@@ -280,8 +314,8 @@ def run_game():
     # clock for keeping track of time, ticks, and frames per second
     clock = pygame.time.Clock()
     goat = Goat([64, 143])
-    grass_left = Grass((15, 400))
-    grass_right = Grass((780, 400))
+    grass_left = Grass((66, 135), alive = False)
+    grass_right = Grass((232, 135), alive = True)
     fallthrough_slabs = [
         Slab(pygame.Rect(209, 195, 21, 3)),
         Slab(pygame.Rect(292, 151, 15, 3)),
@@ -299,7 +333,7 @@ def run_game():
         Slab(pygame.Rect(120, 231, 166, 4)),
         Slab(pygame.Rect(262, 166, 44, 4)),
         Slab(pygame.Rect(306, 143, 14, 27)),
-        Slab(pygame.Rect(316, 25, 3, 120)),
+        Slab(pygame.Rect(310, 25, 20, 120)),
         Slab(pygame.Rect(232, 181, 54, 53)),
         Slab(pygame.Rect(250, 172, 21, 12))
     ]
@@ -385,24 +419,19 @@ def run_game():
         goat.position[0] = goat.rect.x
         goat.position[1] = goat.rect.bottom
 
-        # -- update player
         goat.update()
-        # -- update particles
-        # -- update grass
+        grass_left.update()
+        grass_right.update()
 
-        # render
-        # -- render background
         # for slab in slabs:
         #     slab.render(display)
 
         # for slab in fallthrough_slabs:
         #     slab.render(display)
-        # -- render foreground
-        # -- render grass
-        # -- render player
-        goat.render(display)
 
-        # -- render debug
+        goat.render(display)
+        grass_left.render(display)
+        grass_right.render(display)
 
         pygame.display.flip()
 
