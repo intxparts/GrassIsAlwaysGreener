@@ -8,6 +8,7 @@ def get_asset_file(filename):
     return os.path.join(ASSETS_FOLDER, filename)
 
 
+# TODO: look into subsurface for optimization
 def get_image_at(spritesheet, rect):
     image = pygame.Surface(rect.size, pygame.SRCALPHA, 32).convert_alpha()
     image.blit(spritesheet, (0, 0), rect)
@@ -26,15 +27,21 @@ class Color:
     BLACK = (0, 0, 0)
     AWESOME_GRAY = (49, 49, 49)
     LIGHT_SKY_BLUE = (135, 206, 250)
+    RED = (255, 0, 0)
 
 
 class Goat:
 
     STANDING_NORMAL = pygame.transform.scale2x(get_image_at(SPRITE_SHEET, pygame.rect.Rect(26, 31, 16, 12)))
+    STANDING_NORMAL_LEFT = pygame.transform.flip(STANDING_NORMAL, True, False)
 
     def __init__(self, start_position):
         self.__position = start_position
-        self.__aabb = 0
+        self.image = Goat.STANDING_NORMAL
+        self.rect = self.image.get_rect()
+
+        self.__debug_surface = pygame.Surface((self.rect.width, self.rect.height))
+        self.__debug_surface.fill(Color.RED)
 
     @property
     def position(self):
@@ -44,6 +51,7 @@ class Goat:
         pass
 
     def render(self, display):
+        display.blit(self.__debug_surface, self.__position)
         display.blit(Goat.STANDING_NORMAL, self.__position)
 
 
