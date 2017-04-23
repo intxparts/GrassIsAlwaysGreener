@@ -64,6 +64,7 @@ class Grass:
             [Grass.ALIVE_1, Grass.ALIVE_2, Grass.ALIVE_3, Grass.ALIVE_2],
             [Grass.DEAD_1, Grass.DEAD_2, Grass.DEAD_3, Grass.DEAD_2]
             ]
+        self.rect = pygame.Rect(position[0], position[1], 42, 8)
         self.__sprite_index = 0
         self.__living_index = 0
         self.__frames = 0
@@ -252,7 +253,7 @@ class Goat:
 
 def is_entity_on_ground(entity, slabs):
     entity_rect = entity.rect.copy()
-    entity_rect.bottom += 2
+    entity_rect.bottom += 1
     for slab in slabs:
         if entity_rect.colliderect(slab.rect):
             if slab.rect.top <= entity_rect.bottom <= slab.rect.top + 3:
@@ -278,7 +279,7 @@ def check_collision_x(goat, entities):
 
 def check_collision_y(goat, entities):
     for slab in entities:
-        if goat.rect.colliderect(slab.rect) and goat.velocity[1]:
+        if goat.rect.colliderect(slab.rect) and goat.velocity[1] > 0:
             # player collides with a platform on their head
             if slab.rect.top < goat.rect.top < slab.rect.bottom:
                 goat.rect.top = slab.rect.bottom
@@ -340,6 +341,7 @@ def run_game():
     # fallthrough_slabs = [Slab(pygame.Rect(140, 170, 50, 10))]
     # ground = Slab(pygame.Rect(0, 210, 320, 10))
     # slabs = [ground, Slab(pygame.Rect(0, 175, 20, 10))]
+    event_index = 0
     done = False
     while not done:
         clock.tick(60)
@@ -369,6 +371,23 @@ def run_game():
                     goat.turn_right()
                     print('d pressed')
                 if event.key == pygame.K_e:
+                    if goat.rect.colliderect(grass_right.rect):
+                        if event_index == 0:
+                            grass_right.is_alive = False
+                            grass_left.is_alive = True
+                            event_index += 1
+                        if event_index == 2:
+                            # eat flower
+                            # display heart
+                            event_index += 1
+                    if goat.rect.colliderect(grass_left.rect):
+                        if event_index == 1:
+                            grass_right.is_alive = True
+                            grass_left.is_alive = False
+                            # break bridge
+                            # spawn flower
+                            event_index += 1
+
                     print('e pressed')
                 if event.key == pygame.K_SPACE and goat.is_grounded:
                     goat.is_grounded = False
@@ -385,6 +404,7 @@ def run_game():
                         goat.turn_left()
                     print('d released')
                 if event.key == pygame.K_e:
+                    
                     print('e released')
                 if event.key == pygame.K_SPACE:
                     print('space released')
