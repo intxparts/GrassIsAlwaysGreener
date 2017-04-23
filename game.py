@@ -16,7 +16,7 @@ def get_image_at(spritesheet, rect):
 
 
 # initialize the display for drawing to the screen
-display = pygame.display.set_mode([800, 600], pygame.DOUBLEBUF, 32)
+display = pygame.display.set_mode([320, 240], pygame.DOUBLEBUF, 32)
 ASSETS_FOLDER = os.path.join(os.getcwd(), 'Assets')
 SPRITE_SHEET = pygame.image.load(get_asset_file('goats.png')).convert_alpha()
 
@@ -211,7 +211,7 @@ class Goat:
                 self.__sprite_index = 2
 
     def render(self, display):
-        display.blit(self.__debug_surface, (self.rect.x, self.rect.y))
+        # display.blit(self.__debug_surface, (self.rect.x, self.rect.y))
         display.blit(self.__sprite, (self.rect.x, self.rect.y))
 
 
@@ -269,8 +269,8 @@ def handle_fallthrough_collision_y(goat, entities):
 
 
 def run_game():
-    pygame.display.set_caption('The Grass is Always Greener - Ludum Dare 38 - Theme: A Small World')
-    # pygame.display.set_icon(Player.SPRITE_DEATH)
+    pygame.display.set_caption('Grass is Always Greener')
+    pygame.display.set_icon(Goat.STANDING_NORMAL)
 
     # initialize the mixer for sound to work
     # pygame.mixer.music.load(get_asset_file('background_music.ogg'))
