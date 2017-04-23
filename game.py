@@ -67,7 +67,7 @@ class Goat:
     GROUP_WALKING_RIGHT = [
         STANDING_NORMAL,
         WALKING_TOGETHER,
-        STANDING_CROUCHED,
+        # STANDING_CROUCHED,
         WALKING_SEPARATE
         ]
     GROUP_WALKING_LEFT = generate_left_image_group(GROUP_WALKING_RIGHT)
@@ -92,9 +92,20 @@ class Goat:
             Goat.GROUP_EATING,
             Goat.GROUP_FLOWER
             ]
-        self.image = Goat.STANDING_NORMAL
-        self.rect = self.image.get_rect()
 
+        self.image = self.__sprite
+        self.rect = self.image.get_rect()
+        self.rect.x = self.__position[0]
+        self.rect.y = self.__position[1] - self.rect.height
+
+        self.__debug_surface = pygame.Surface((self.rect.width, self.rect.height))
+        self.__debug_surface.fill(Color.RED)
+
+    def update_draw_position(self):
+        self.image = self.__sprite
+        self.rect = self.image.get_rect()
+        self.rect.x = self.__position[0]
+        self.rect.y = self.__position[1] - self.rect.height
         self.__debug_surface = pygame.Surface((self.rect.width, self.rect.height))
         self.__debug_surface.fill(Color.RED)
 
@@ -106,10 +117,11 @@ class Goat:
         return self.__sprites[self.__group_index]
 
     def __direction(self):
-        return self.__group()[self.__direction_index]
+        return self.__sprites[self.__group_index][self.__direction_index]
 
+    @property
     def __sprite(self):
-        return self.__direction()[self.__sprite_index]
+        return self.__sprites[self.__group_index][self.__direction_index][self.__sprite_index]
 
     def update(self):
         pass
@@ -118,9 +130,10 @@ class Goat:
         self.__frames += 1
         if self.__frames >= 20:
             self.__sprite_index = (self.__sprite_index + 1) % len(self.__direction())
+            self.update_draw_position()
             self.__frames = 0
-        display.blit(self.__debug_surface, self.__position)
-        display.blit(self.__sprite(), self.__position)
+        display.blit(self.__debug_surface, (self.rect.x, self.rect.y))
+        display.blit(self.__sprite, (self.rect.x, self.rect.y))
 
 
 def run_game():
