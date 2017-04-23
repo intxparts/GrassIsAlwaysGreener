@@ -19,6 +19,7 @@ def get_image_at(spritesheet, rect):
 display = pygame.display.set_mode([320, 240], pygame.DOUBLEBUF, 32)
 ASSETS_FOLDER = os.path.join(os.getcwd(), 'Assets')
 SPRITE_SHEET = pygame.image.load(get_asset_file('goats.png')).convert_alpha()
+WORLD = pygame.image.load(get_asset_file('world.png'))
 
 
 class Color:
@@ -278,17 +279,38 @@ def run_game():
 
     # clock for keeping track of time, ticks, and frames per second
     clock = pygame.time.Clock()
-    goat = Goat([15, 15])
+    goat = Goat([64, 143])
     grass_left = Grass((15, 400))
     grass_right = Grass((780, 400))
-    fallthrough_slabs = [Slab(pygame.Rect(140, 215, 50, 10))]
-    ground = Slab(pygame.Rect(0, 250, 800, 350))
-    wall = Slab(pygame.Rect(400, 0, 15, 250))
-    slabs = [ground, wall, Slab(pygame.Rect(0, 230, 20, 10)), Slab(pygame.Rect(100, 210, 20, 10))]
+    fallthrough_slabs = [
+        Slab(pygame.Rect(209, 195, 21, 3)),
+        Slab(pygame.Rect(292, 151, 15, 3)),
+        Slab(pygame.Rect(208, 142, 109, 3)),
+        Slab(pygame.Rect(192, 212, 16, 3)),
+        Slab(pygame.Rect(209, 195, 21, 3)),
+        Slab(pygame.Rect(244, 160, 15, 3))
+        ]
+    slabs = [
+        Slab(pygame.Rect(5, 101, 59, 4)),
+        Slab(pygame.Rect(64, 27, 3, 74)),
+        Slab(pygame.Rect(4, 100, 3, 43)),
+        Slab(pygame.Rect(2, 143, 121, 4)),
+        Slab(pygame.Rect(121, 143, 3, 97)),
+        Slab(pygame.Rect(120, 231, 166, 4)),
+        Slab(pygame.Rect(262, 166, 44, 4)),
+        Slab(pygame.Rect(306, 143, 14, 27)),
+        Slab(pygame.Rect(316, 25, 3, 120)),
+        Slab(pygame.Rect(232, 181, 54, 53)),
+        Slab(pygame.Rect(250, 172, 21, 12))
+    ]
+    # fallthrough_slabs = [Slab(pygame.Rect(140, 170, 50, 10))]
+    # ground = Slab(pygame.Rect(0, 210, 320, 10))
+    # slabs = [ground, Slab(pygame.Rect(0, 175, 20, 10))]
     done = False
     while not done:
         clock.tick(60)
         display.fill(Color.LIGHT_SKY_BLUE)
+        display.blit(WORLD, (0, 0))
 
         goat.is_grounded = is_entity_on_ground(goat, slabs) or is_entity_on_ground(goat, fallthrough_slabs)
         if goat.is_grounded:
@@ -316,7 +338,7 @@ def run_game():
                     print('e pressed')
                 if event.key == pygame.K_SPACE and goat.is_grounded:
                     goat.is_grounded = False
-                    goat.velocity[1] = -3
+                    goat.velocity[1] = -2
                     print('space pressed')
 
             if event.type == pygame.KEYUP:
@@ -370,11 +392,11 @@ def run_game():
 
         # render
         # -- render background
-        for slab in slabs:
-            slab.render(display)
+        # for slab in slabs:
+        #     slab.render(display)
 
-        for slab in fallthrough_slabs:
-            slab.render(display)
+        # for slab in fallthrough_slabs:
+        #     slab.render(display)
         # -- render foreground
         # -- render grass
         # -- render player
