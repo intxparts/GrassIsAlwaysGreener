@@ -538,10 +538,10 @@ def run_game():
                     done = True
                 if event.key == pygame.K_a:
                     goat.turn_left()
-                    print('a pressed')
+                    # print('a pressed')
                 if event.key == pygame.K_d:
                     goat.turn_right()
-                    print('d pressed')
+                    # print('d pressed')
                 if event.key == pygame.K_e:
                     if goat.rect.colliderect(grass_right.rect):
                         if event_index == 0:
@@ -575,28 +575,30 @@ def run_game():
                             flower.SOUND.play(0)
                             event_index += 1
 
-                    print('e pressed')
+                    # print('e pressed')
                 if event.key == pygame.K_SPACE and goat.is_grounded:
                     goat.is_grounded = False
                     if wind.active:
                         goat.velocity[1] = -1
                     else:
                         goat.velocity[1] = -2
-                    print('space pressed')
+                    # print('space pressed')
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_a:
                     if goat.is_moving_horizontally:
                         goat.turn_right()
-                    print('a released')
+                    # print('a released')
                 if event.key == pygame.K_d:
                     if goat.is_moving_horizontally:
                         goat.turn_left()
-                    print('d released')
+                    # print('d released')
                 if event.key == pygame.K_e:
-                    print('e released')
+                    pass
+                    # print('e released')
                 if event.key == pygame.K_SPACE:
-                    print('space released')
+                    pass
+                    # print('space released')
 
         wind_friction = 0
         if wind.active:
