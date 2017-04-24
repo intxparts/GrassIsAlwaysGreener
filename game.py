@@ -102,7 +102,7 @@ class Bridge:
     def __init__(self):
         self.position = (121, 143)
         self.__debris_particles = [Bridge.DEBRIS_1, Bridge.DEBRIS_2]
-        self.__debris_position = [self.position, self.position]
+        self.__debris_position = [(42 + self.position[0], 2 + self.position[1]), (42 + self.position[0], 2 + self.position[1])]
         self.image = Bridge.SPRITE
         self.rect = self.image.get_rect()
         self.rect.x = self.position[0]
@@ -126,7 +126,7 @@ class Bridge:
     def update(self):
         if self.is_broken:
             self.__frames += 1
-            if self.__frames > 3:
+            if self.__frames > 16:
                 if self.__debris_index == 1:
                     self.__display_debris = False
                 else:
@@ -420,11 +420,11 @@ def check_collision_x(goat, entities):
         if goat.rect.colliderect(slab.rect):
 
             # player collides with a platform on their right
-            if slab.rect.left <= goat.rect.right <= slab.rect.right:
+            if slab.rect.left < goat.rect.right < slab.rect.right:
                 goat.rect.right = slab.rect.left
 
             # player collides with a platform on their left
-            elif slab.rect.left <= goat.rect.left <= slab.rect.right:
+            elif slab.rect.left < goat.rect.left < slab.rect.right:
                 goat.rect.left = slab.rect.right
 
             goat.velocity[0] = 0
@@ -432,13 +432,13 @@ def check_collision_x(goat, entities):
 
 def check_collision_y(goat, entities):
     for slab in entities:
-        if goat.rect.colliderect(slab.rect) and goat.velocity[1] > 0:
+        if goat.rect.colliderect(slab.rect):
             # player collides with a platform on their head
-            if slab.rect.top <= goat.rect.top <= slab.rect.bottom:
+            if slab.rect.top < goat.rect.top < slab.rect.bottom:
                 goat.rect.top = slab.rect.bottom
 
             # player collides standing on a platform
-            elif slab.rect.top <= goat.rect.bottom <= slab.rect.bottom:
+            elif slab.rect.top < goat.rect.bottom < slab.rect.bottom:
                 goat.rect.bottom = slab.rect.top
 
             goat.velocity[1] = 0
@@ -488,15 +488,16 @@ def run_game():
         Slab(pygame.Rect(244, 160, 15, 3))
         ]
     slabs = [
+        Slab(pygame.Rect(0, 0, 12, 190)),
         Slab(pygame.Rect(5, 101, 59, 4)),
         Slab(pygame.Rect(64, 27, 3, 74)),
-        Slab(pygame.Rect(4, 100, 3, 43)),
-        Slab(pygame.Rect(2, 143, 121, 4)),
+        Slab(pygame.Rect(0, 88, 67, 15)),
+        Slab(pygame.Rect(0, 143, 124, 97)),
         Slab(pygame.Rect(121, 143, 3, 97)),
-        Slab(pygame.Rect(120, 231, 166, 4)),
-        Slab(pygame.Rect(262, 166, 44, 4)),
+        Slab(pygame.Rect(120, 231, 166, 16)),
+        Slab(pygame.Rect(262, 166, 44, 80)),
         Slab(pygame.Rect(306, 143, 14, 27)),
-        Slab(pygame.Rect(310, 25, 20, 120)),
+        Slab(pygame.Rect(310, 25, 20, 200)),
         Slab(pygame.Rect(232, 181, 54, 53)),
         Slab(pygame.Rect(250, 172, 21, 12))
     ]
