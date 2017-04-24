@@ -342,6 +342,7 @@ class Goat:
 
     def is_happy(self, happy):
         self.__group_index = 3
+        self.__sprite_index = 0
         self.update_indices()
 
     @property
@@ -655,7 +656,7 @@ def run_game():
             display.blit(hunger.SPRITE, (goat.rect.right + 5, goat.rect.top - (goat.rect.height + 10)))
         if eating.active:
             if goat.direction == 0:
-                display.blit(eating.current_image, (goat.rect.right + 10, goat.rect.top + 5))
+                display.blit(eating.current_image, (goat.rect.right - 10, goat.rect.top + 5))
             else:
                 display.blit(eating.current_image, (goat.rect.left - 10, goat.rect.top + 5))
         pygame.display.flip()
