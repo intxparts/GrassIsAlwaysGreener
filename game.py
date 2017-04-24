@@ -109,14 +109,20 @@ class Bridge:
 
 
 class Boulder:
-    def __init__(self, position):
-        pass
+    SPRITE = apply_image_transform(pygame.Rect(121, 62, 34, 36))
 
-    def update(self):
-        pass
+    def __init__(self):
+        self.position = [140, -80]
+        self.active = False
+        self.image = Boulder.SPRITE
+        self.rect = self.image.get_rect()
+        self.rect.x = self.position[0]
+        self.rect.y = self.position[1]
+        self.velocity = (0, 10)
 
     def render(self, display):
-        pass
+        if self.active:
+            display.blit(self.SPRITE, (self.rect.x, self.rect.y))
 
 
 class Wind:
@@ -422,6 +428,7 @@ def run_game():
     goat = Goat([64, 143])
     bridge = Bridge()
     wind = Wind()
+    boulder = Boulder()
     grass_left = Grass((66, 135), alive = False)
     grass_right = Grass((232, 135), alive = True)
     fallthrough_slabs = [
@@ -497,6 +504,7 @@ def run_game():
                             grass_left.is_alive = False
                             wind.active = False
                             grass_left.is_windy = False
+                            boulder.active = True
                             # break bridge
                             # spawn flower
                             event_index += 1
@@ -540,10 +548,13 @@ def run_game():
         else:
             goat.velocity[1] += 0.15
 
-        # if goat.velocity[1] == 0:
-        #     goat.velocity[1] = 1
-        # else:
-        #     goat.velocity[1] += 0.15
+        if boulder.active:
+            boulder.rect.y += boulder.velocity[1]
+            if boulder.rect.colliderect(bridge.rect):
+                bridge.is_broken = True
+
+            if boulder.rect.y > 240:
+                boulder.active = False
 
         # update
         goat.rect.x += goat.velocity[0]
@@ -579,6 +590,7 @@ def run_game():
         grass_right.render(display)
         bridge.render(display)
         wind.render(display)
+        boulder.render(display)
         if hunger.display:
             display.blit(hunger.SPRITE, (goat.rect.right + 5, goat.rect.top - (goat.rect.height + 10)))
         pygame.display.flip()
