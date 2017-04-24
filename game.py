@@ -35,16 +35,46 @@ class Color:
     YELLOW_GREEN = (154, 205, 50)
 
 
+class Flower:
+    SPRITE = apply_image_transform(pygame.Rect(38, 60, 3, 5))
 
-class HappyBubble:
-    def __init__(self, position):
-        pass
-
-    def update(self):
-        pass
+    def __init__(self):
+        self.display = False
+        self.position = (235, 135)
 
     def render(self, display):
-        pass
+        if self.display:
+            display.blit(Flower.SPRITE, self.position)
+
+
+class EatingParticles:
+    SPRITE1 = apply_image_transform(pygame.Rect(0, 69, 8, 11))
+    SPRITE2 = apply_image_transform(pygame.Rect(8, 69, 10, 11))
+    SPRITE3 = apply_image_transform(pygame.Rect(18, 69, 11, 11))
+
+    def __init__(self):
+        self.active = False
+        self.__sprites = [EatingParticles.SPRITE1, EatingParticles.SPRITE2, EatingParticles.SPRITE3]
+        self.__sprite_index = 0
+        self.__frames = 0
+
+    def update(self):
+        if self.active:
+            self.__frames += 1
+            if self.__frames >= 32:
+                self.__sprite_index = (self.__sprite_index + 1) % len(self.__sprites)
+                self.__frames = 0
+
+    @property
+    def current_image(self):
+        return self.__sprites[self.__sprite_index]
+
+
+class HappyBubble:
+    SPRITE = apply_image_transform(pygame.Rect(136, 0, 154, 18))
+
+    def __init__(self):
+        self.display = False
 
 
 class HungerBubble:
@@ -226,11 +256,8 @@ class Goat:
     JUMPING_MID = apply_image_transform(pygame.rect.Rect(120, 27, 15, 11))
     JUMPING_END = apply_image_transform(pygame.rect.Rect(138, 32, 15, 11))
 
-    EATING_STANDING = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
-    EATING_CROUCHED = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
-
-    FLOWER_STANDING = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
-    FLOWER_CROUCHED = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
+    FLOWER_STANDING = apply_image_transform(pygame.rect.Rect(26, 14, 16, 12))
+    FLOWER_CROUCHED = apply_image_transform(pygame.rect.Rect(8, 15, 16, 11))
 
     GROUP_STANDING_RIGHT = [STANDING_NORMAL, STANDING_CROUCHED]
     GROUP_STANDING_LEFT = generate_left_image_group(GROUP_STANDING_RIGHT)
@@ -246,9 +273,6 @@ class Goat:
         ]
     GROUP_WALKING_LEFT = generate_left_image_group(GROUP_WALKING_RIGHT)
     GROUP_WALKING = [GROUP_WALKING_RIGHT, GROUP_WALKING_LEFT]
-    GROUP_EATING_RIGHT = [EATING_STANDING, EATING_CROUCHED]
-    GROUP_EATING_LEFT = generate_left_image_group(GROUP_EATING_RIGHT)
-    GROUP_EATING = [GROUP_EATING_RIGHT, GROUP_EATING_LEFT]
     GROUP_FLOWER_RIGHT = [FLOWER_STANDING, FLOWER_CROUCHED]
     GROUP_FLOWER_LEFT = generate_left_image_group(GROUP_FLOWER_RIGHT)
     GROUP_FLOWER = [GROUP_FLOWER_RIGHT, GROUP_FLOWER_LEFT]
@@ -264,7 +288,6 @@ class Goat:
             Goat.GROUP_STANDING,
             Goat.GROUP_WALKING,
             Goat.GROUP_JUMPING,
-            Goat.GROUP_EATING,
             Goat.GROUP_FLOWER
             ]
         self.__is_moving_horizontally = False
@@ -311,6 +334,10 @@ class Goat:
             self.__sprite_index = 0
             self.__frames = 0
         self.__is_grounded = grounded
+
+    def is_happy(self, happy):
+        self.__group_index = 3
+        self.update_indices()
 
     @property
     def direction(self):
@@ -425,12 +452,17 @@ def run_game():
     # clock for keeping track of time, ticks, and frames per second
     clock = pygame.time.Clock()
     hunger = HungerBubble()
+    happy = HappyBubble()
     goat = Goat([64, 143])
     bridge = Bridge()
+    eating = EatingParticles()
     wind = Wind()
+    flower = Flower()
     boulder = Boulder()
     grass_left = Grass((66, 135), alive = False)
     grass_right = Grass((232, 135), alive = True)
+    disable_controls = False
+    ending_timer = 0
     fallthrough_slabs = [
         Slab(pygame.Rect(209, 195, 21, 3)),
         Slab(pygame.Rect(292, 151, 15, 3)),
@@ -462,115 +494,126 @@ def run_game():
         display.fill(Color.LIGHT_SKY_BLUE)
         display.blit(WORLD, (0, 0))
 
-        goat_on_bridge = not bridge.is_broken and is_entity_on_ground(goat, [bridge])
-
-        goat.is_grounded = is_entity_on_ground(goat, slabs) or is_entity_on_ground(goat, fallthrough_slabs) or goat_on_bridge
-        if goat.is_grounded:
-            goat.velocity[0] = 0
-
-        # handle input
-        events = pygame.event.get()
-        keys_pressed = pygame.key.get_pressed()
-        goat.is_moving_horizontally = keys_pressed[pygame.K_a] or keys_pressed[pygame.K_d]
-        for event in events:
-            # handle clicking the X on the game window
-            if event.type == pygame.QUIT:
-                print('received a quit request')
+        if disable_controls:
+            ending_timer += 1
+            if ending_timer >= 460:
                 done = True
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    done = True
-                if event.key == pygame.K_a:
-                    goat.turn_left()
-                    print('a pressed')
-                if event.key == pygame.K_d:
-                    goat.turn_right()
-                    print('d pressed')
-                if event.key == pygame.K_e:
-                    if goat.rect.colliderect(grass_right.rect):
-                        if event_index == 0:
-                            grass_right.is_alive = False
-                            grass_left.is_alive = True
-                            wind.active = True
-                            grass_left.is_windy = True
-                            event_index += 1
-                        if event_index == 2:
-                            # eat flower
-                            # display heart
-                            event_index += 1
-                    if goat.rect.colliderect(grass_left.rect):
-                        if event_index == 1:
-                            grass_right.is_alive = True
-                            grass_left.is_alive = False
-                            wind.active = False
-                            grass_left.is_windy = False
-                            boulder.active = True
-                            # break bridge
-                            # spawn flower
-                            event_index += 1
-
-                    print('e pressed')
-                if event.key == pygame.K_SPACE and goat.is_grounded:
-                    goat.is_grounded = False
-                    if wind.active:
-                        goat.velocity[1] = -1
-                    else:
-                        goat.velocity[1] = -2
-                    print('space pressed')
-
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_a:
-                    if goat.is_moving_horizontally:
-                        goat.turn_right()
-                    print('a released')
-                if event.key == pygame.K_d:
-                    if goat.is_moving_horizontally:
-                        goat.turn_left()
-                    print('d released')
-                if event.key == pygame.K_e:
-                    print('e released')
-                if event.key == pygame.K_SPACE:
-                    print('space released')
-
-        wind_friction = 0
-        if wind.active:
-            wind_friction = 1
-            # goat is moving right
-        if goat.is_moving_horizontally and goat.direction == 0:
-            goat.velocity[0] = 2 - wind_friction
-        elif goat.is_moving_horizontally and goat.direction == 1:
-            goat.velocity[0] = -2 + wind_friction
-        elif not goat.is_moving_horizontally:
-            goat.velocity[0] = 0
-
-        if goat.is_grounded:
-            goat.velocity[1] = 0
         else:
-            goat.velocity[1] += 0.15
 
-        if boulder.active:
-            boulder.rect.y += boulder.velocity[1]
-            if boulder.rect.colliderect(bridge.rect):
-                bridge.is_broken = True
+            goat_on_bridge = not bridge.is_broken and is_entity_on_ground(goat, [bridge])
 
-            if boulder.rect.y > 240:
-                boulder.active = False
+            goat.is_grounded = is_entity_on_ground(goat, slabs) or is_entity_on_ground(goat, fallthrough_slabs) or goat_on_bridge
+            if goat.is_grounded:
+                goat.velocity[0] = 0
 
-        # update
-        goat.rect.x += goat.velocity[0]
-        check_collision_x(goat, slabs)
-        if not bridge.is_broken:
-            check_collision_x(goat, [bridge])
-        handle_fallthrough_collision_x(goat, fallthrough_slabs)
+            # handle input
+            events = pygame.event.get()
+            keys_pressed = pygame.key.get_pressed()
+            goat.is_moving_horizontally = keys_pressed[pygame.K_a] or keys_pressed[pygame.K_d]
+            for event in events:
+                # handle clicking the X on the game window
+                if event.type == pygame.QUIT:
+                    print('received a quit request')
+                    done = True
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        done = True
+                    if event.key == pygame.K_a:
+                        goat.turn_left()
+                        print('a pressed')
+                    if event.key == pygame.K_d:
+                        goat.turn_right()
+                        print('d pressed')
+                    if event.key == pygame.K_e:
+                        if goat.rect.colliderect(grass_right.rect):
+                            if event_index == 0:
+                                grass_right.is_alive = False
+                                grass_left.is_alive = True
+                                wind.active = True
+                                grass_left.is_windy = True
+                                grass_right.is_windy = True
+                                event_index += 1
+                            if event_index == 2:
+                                flower.display = False
+                                happy.display = True
+                                goat.is_happy = True
+                                eating.active = True
+                                disable_controls = True
+                                event_index += 1
+                        if goat.rect.colliderect(grass_left.rect):
+                            if event_index == 1:
+                                grass_right.is_alive = True
+                                grass_left.is_alive = False
+                                wind.active = False
+                                grass_left.is_windy = False
+                                grass_right.is_windy = False
+                                boulder.active = True
+                                flower.display = True
+                                event_index += 1
 
-        goat.rect.y += goat.velocity[1]
-        check_collision_y(goat, slabs)
-        if not bridge.is_broken:
-            check_collision_y(goat, [bridge])
-        handle_fallthrough_collision_y(goat, fallthrough_slabs)
+                        print('e pressed')
+                    if event.key == pygame.K_SPACE and goat.is_grounded:
+                        goat.is_grounded = False
+                        if wind.active:
+                            goat.velocity[1] = -1
+                        else:
+                            goat.velocity[1] = -2
+                        print('space pressed')
 
-        goat.position[0] = goat.rect.x
-        goat.position[1] = goat.rect.bottom
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_a:
+                        if goat.is_moving_horizontally:
+                            goat.turn_right()
+                        print('a released')
+                    if event.key == pygame.K_d:
+                        if goat.is_moving_horizontally:
+                            goat.turn_left()
+                        print('d released')
+                    if event.key == pygame.K_e:
+                        print('e released')
+                    if event.key == pygame.K_SPACE:
+                        print('space released')
+
+            wind_friction = 0
+            if wind.active:
+                wind_friction = 1
+                # goat is moving right
+            if goat.is_moving_horizontally and goat.direction == 0:
+                goat.velocity[0] = 2 - wind_friction
+            elif goat.is_moving_horizontally and goat.direction == 1:
+                goat.velocity[0] = -2 + wind_friction
+            elif not goat.is_moving_horizontally:
+                goat.velocity[0] = 0
+
+            if goat.is_grounded:
+                goat.velocity[1] = 0
+            else:
+                goat.velocity[1] += 0.15
+
+            if boulder.active:
+                boulder.rect.y += boulder.velocity[1]
+                if boulder.rect.colliderect(bridge.rect):
+                    bridge.is_broken = True
+
+                if boulder.rect.y > 240:
+                    boulder.active = False
+
+            # update
+            goat.rect.x += goat.velocity[0]
+            check_collision_x(goat, slabs)
+            if not bridge.is_broken:
+                check_collision_x(goat, [bridge])
+            handle_fallthrough_collision_x(goat, fallthrough_slabs)
+
+            goat.rect.y += goat.velocity[1]
+            check_collision_y(goat, slabs)
+            if not bridge.is_broken:
+                check_collision_y(goat, [bridge])
+            handle_fallthrough_collision_y(goat, fallthrough_slabs)
+
+            goat.position[0] = goat.rect.x
+            goat.position[1] = goat.rect.bottom
+        # end disable controls
 
         hunger.update()
         wind.update()
@@ -578,6 +621,7 @@ def run_game():
         grass_left.update()
         grass_right.update()
         bridge.update()
+        eating.update()
 
         # for slab in slabs:
         #     slab.render(display)
@@ -588,11 +632,19 @@ def run_game():
         goat.render(display)
         grass_left.render(display)
         grass_right.render(display)
+        flower.render(display)
         bridge.render(display)
         wind.render(display)
         boulder.render(display)
+        if happy.display:
+            display.blit(HappyBubble.SPRITE, (goat.rect.right + 5, goat.rect.top - (goat.rect.height + 10)))
         if hunger.display:
             display.blit(hunger.SPRITE, (goat.rect.right + 5, goat.rect.top - (goat.rect.height + 10)))
+        if eating.active:
+            if goat.direction == 0:
+                display.blit(eating.current_image, (goat.rect.right + 10, goat.rect.top + 5))
+            else:
+                display.blit(eating.current_image, (goat.rect.left - 10, goat.rect.top + 5))
         pygame.display.flip()
 
 
