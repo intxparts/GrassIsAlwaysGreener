@@ -37,6 +37,7 @@ class Color:
 
 class Flower:
     SPRITE = apply_image_transform(pygame.Rect(38, 60, 3, 5))
+    SOUND = pygame.mixer.Sound(get_asset_file('flowerappearing.ogg'))
 
     def __init__(self):
         self.display = False
@@ -51,6 +52,7 @@ class EatingParticles:
     SPRITE1 = apply_image_transform(pygame.Rect(0, 69, 8, 11))
     SPRITE2 = apply_image_transform(pygame.Rect(8, 69, 10, 11))
     SPRITE3 = apply_image_transform(pygame.Rect(18, 69, 11, 11))
+    SOUND = pygame.mixer.Sound(get_asset_file('eating.ogg'))
 
     def __init__(self):
         self.active = False
@@ -95,6 +97,7 @@ class Bridge:
     SPRITE = apply_image_transform(pygame.Rect(55, 69, 46, 2))
     DEBRIS_1 = apply_image_transform(pygame.Rect(61, 81, 14, 12))
     DEBRIS_2 = apply_image_transform(pygame.Rect(80, 77, 25, 17))
+    BREAKING_SOUND = pygame.mixer.Sound(get_asset_file('boulderbreakingwood.ogg'))
 
     def __init__(self):
         self.position = (121, 143)
@@ -117,6 +120,7 @@ class Bridge:
     def is_broken(self, broken):
         if broken:
             self.__display_debris = True
+            Bridge.BREAKING_SOUND.play(0)
         self.__is_broken = broken
 
     def update(self):
@@ -159,6 +163,7 @@ class Wind:
     SPRITE1 = apply_image_transform(pygame.Rect(0, 80, 28, 13))
     SPRITE2 = apply_image_transform(pygame.Rect(27, 80, 28, 13))
     SPRITE3 = apply_image_transform(pygame.Rect(28, 67, 27, 13))
+    SOUND = pygame.mixer.Sound(get_asset_file('strongestwind.ogg'))
 
     def __init__(self):
         self.position = (102, 90)
@@ -244,7 +249,7 @@ class Goat:
             left_image_group.append(pygame.transform.flip(i, True, False))
         return left_image_group
 
-
+    GRUNT_SOUND = pygame.mixer.Sound(get_asset_file('goatgrunt.ogg'))
     STANDING_NORMAL = apply_image_transform(pygame.rect.Rect(26, 31, 16, 12))
     STANDING_CROUCHED = apply_image_transform(pygame.rect.Rect(8, 32, 16, 11))
 
@@ -487,6 +492,8 @@ def run_game():
     # fallthrough_slabs = [Slab(pygame.Rect(140, 170, 50, 10))]
     # ground = Slab(pygame.Rect(0, 210, 320, 10))
     # slabs = [ground, Slab(pygame.Rect(0, 175, 20, 10))]
+    pygame.mixer.music.load(get_asset_file('background.ogg'))
+    pygame.mixer.music.play(-1)
     event_index = 0
     done = False
     while not done:
@@ -529,6 +536,8 @@ def run_game():
                             if event_index == 0:
                                 grass_right.is_alive = False
                                 grass_left.is_alive = True
+                                goat.GRUNT_SOUND.play(0)
+                                wind.SOUND.play(0)
                                 wind.active = True
                                 grass_left.is_windy = True
                                 grass_right.is_windy = True
@@ -539,16 +548,20 @@ def run_game():
                                 goat.is_happy = True
                                 eating.active = True
                                 disable_controls = True
+                                eating.SOUND.play(0)
                                 event_index += 1
                         if goat.rect.colliderect(grass_left.rect):
                             if event_index == 1:
+                                goat.GRUNT_SOUND.play(0)
                                 grass_right.is_alive = True
                                 grass_left.is_alive = False
+                                wind.SOUND.stop()
                                 wind.active = False
                                 grass_left.is_windy = False
                                 grass_right.is_windy = False
                                 boulder.active = True
                                 flower.display = True
+                                flower.SOUND.play(0)
                                 event_index += 1
 
                         print('e pressed')
