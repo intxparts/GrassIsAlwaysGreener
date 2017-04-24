@@ -120,14 +120,26 @@ class Boulder:
 
 
 class Wind:
-    def __init__(self, position):
-        pass
+    SPRITE1 = apply_image_transform(pygame.Rect(0, 80, 28, 13))
+    SPRITE2 = apply_image_transform(pygame.Rect(27, 80, 28, 13))
+    SPRITE3 = apply_image_transform(pygame.Rect(28, 67, 27, 13))
+
+    def __init__(self):
+        self.position = (102, 90)
+        self.active = False
+        self.__frames = 0
+        self.__sprite_index = 0
+        self.__sprites = [Wind.SPRITE1, Wind.SPRITE2, Wind.SPRITE3]
 
     def update(self):
-        pass
+        if self.active:
+            self.__frames += 1
+            if self.__frames >= 10:
+                self.__sprite_index = (self.__sprite_index + 1) % len(self.__sprites)
 
     def render(self, display):
-        pass
+        if self.active:
+            display.blit(self.__sprites[self.__sprite_index], self.position)
 
 
 class Slab:
@@ -409,6 +421,7 @@ def run_game():
     hunger = HungerBubble()
     goat = Goat([64, 143])
     bridge = Bridge()
+    wind = Wind()
     grass_left = Grass((66, 135), alive = False)
     grass_right = Grass((232, 135), alive = True)
     fallthrough_slabs = [
@@ -471,6 +484,8 @@ def run_game():
                         if event_index == 0:
                             grass_right.is_alive = False
                             grass_left.is_alive = True
+                            wind.active = True
+                            grass_left.is_windy = True
                             event_index += 1
                         if event_index == 2:
                             # eat flower
@@ -480,6 +495,8 @@ def run_game():
                         if event_index == 1:
                             grass_right.is_alive = True
                             grass_left.is_alive = False
+                            wind.active = False
+                            grass_left.is_windy = False
                             # break bridge
                             # spawn flower
                             event_index += 1
@@ -487,7 +504,10 @@ def run_game():
                     print('e pressed')
                 if event.key == pygame.K_SPACE and goat.is_grounded:
                     goat.is_grounded = False
-                    goat.velocity[1] = -2
+                    if wind.active:
+                        goat.velocity[1] = -1
+                    else:
+                        goat.velocity[1] = -2
                     print('space pressed')
 
             if event.type == pygame.KEYUP:
@@ -500,16 +520,18 @@ def run_game():
                         goat.turn_left()
                     print('d released')
                 if event.key == pygame.K_e:
-                    
                     print('e released')
                 if event.key == pygame.K_SPACE:
                     print('space released')
 
+        wind_friction = 0
+        if wind.active:
+            wind_friction = 1
             # goat is moving right
         if goat.is_moving_horizontally and goat.direction == 0:
-            goat.velocity[0] = 2
+            goat.velocity[0] = 2 - wind_friction
         elif goat.is_moving_horizontally and goat.direction == 1:
-            goat.velocity[0] = -2
+            goat.velocity[0] = -2 + wind_friction
         elif not goat.is_moving_horizontally:
             goat.velocity[0] = 0
 
@@ -540,6 +562,7 @@ def run_game():
         goat.position[1] = goat.rect.bottom
 
         hunger.update()
+        wind.update()
         goat.update()
         grass_left.update()
         grass_right.update()
@@ -555,6 +578,7 @@ def run_game():
         grass_left.render(display)
         grass_right.render(display)
         bridge.render(display)
+        wind.render(display)
         if hunger.display:
             display.blit(hunger.SPRITE, (goat.rect.right + 5, goat.rect.top - (goat.rect.height + 10)))
         pygame.display.flip()
