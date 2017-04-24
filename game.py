@@ -46,15 +46,19 @@ class HappyBubble:
     def render(self, display):
         pass
 
+
 class HungerBubble:
-    def __init__(self, position):
-        pass
+    SPRITE = apply_image_transform(pygame.Rect(115, 0, 19, 18))
+
+    def __init__(self):
+        self.__frames = 0
+        self.display = True
 
     def update(self):
-        pass
-
-    def render(self, display):
-        pass
+        if self.display:
+            self.__frames += 1
+            if self.__frames >= 200:
+                self.display = False
 
 
 class Bridge:
@@ -402,6 +406,7 @@ def run_game():
 
     # clock for keeping track of time, ticks, and frames per second
     clock = pygame.time.Clock()
+    hunger = HungerBubble()
     goat = Goat([64, 143])
     bridge = Bridge()
     grass_left = Grass((66, 135), alive = False)
@@ -438,7 +443,6 @@ def run_game():
         display.blit(WORLD, (0, 0))
 
         goat_on_bridge = not bridge.is_broken and is_entity_on_ground(goat, [bridge])
-        print(goat_on_bridge)
 
         goat.is_grounded = is_entity_on_ground(goat, slabs) or is_entity_on_ground(goat, fallthrough_slabs) or goat_on_bridge
         if goat.is_grounded:
@@ -535,6 +539,7 @@ def run_game():
         goat.position[0] = goat.rect.x
         goat.position[1] = goat.rect.bottom
 
+        hunger.update()
         goat.update()
         grass_left.update()
         grass_right.update()
@@ -550,6 +555,8 @@ def run_game():
         grass_left.render(display)
         grass_right.render(display)
         bridge.render(display)
+        if hunger.display:
+            display.blit(hunger.SPRITE, (goat.rect.right + 5, goat.rect.top - (goat.rect.height + 10)))
         pygame.display.flip()
 
 
