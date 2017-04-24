@@ -34,8 +34,96 @@ class Color:
     RED = (255, 0, 0)
     YELLOW_GREEN = (154, 205, 50)
 
+
+
+class HappyBubble:
+    def __init__(self, position):
+        pass
+
+    def update(self):
+        pass
+
+    def render(self, display):
+        pass
+
+class HungerBubble:
+    def __init__(self, position):
+        pass
+
+    def update(self):
+        pass
+
+    def render(self, display):
+        pass
+
+
+class Bridge:
+    SPRITE = apply_image_transform(pygame.Rect(55, 69, 46, 2))
+    DEBRIS_1 = apply_image_transform(pygame.Rect(61, 81, 14, 12))
+    DEBRIS_2 = apply_image_transform(pygame.Rect(80, 77, 25, 17))
+
+    def __init__(self):
+        self.position = (121, 143)
+        self.__debris_particles = [Bridge.DEBRIS_1, Bridge.DEBRIS_2]
+        self.__debris_position = [self.position, self.position]
+        self.image = Bridge.SPRITE
+        self.rect = self.image.get_rect()
+        self.rect.x = self.position[0]
+        self.rect.y = self.position[1]
+        self.__is_broken = False
+        self.__display_debris = False
+        self.__debris_index = 0
+        self.__frames = 0
+
+    @property
+    def is_broken(self):
+        return self.__is_broken
+
+    @is_broken.setter
+    def is_broken(self, broken):
+        if broken:
+            self.__display_debris = True
+        self.__is_broken = broken
+
+    def update(self):
+        if self.is_broken:
+            self.__frames += 1
+            if self.__frames > 3:
+                if self.__debris_index == 1:
+                    self.__display_debris = False
+                else:
+                    self.__debris_index += 1
+
+    def render(self, display):
+        if not self.is_broken:
+            display.blit(self.image, self.position)
+        if self.__display_debris:
+            display.blit(self.__debris_particles[self.__debris_index], self.__debris_position[self.__debris_index])
+        # debug = pygame.Surface((self.rect.width, self.rect.height))
+        # debug.fill(Color.YELLOW_GREEN)
+        # display.blit(debug, (self.rect.x, self.rect.y))
+
+
+class Boulder:
+    def __init__(self, position):
+        pass
+
+    def update(self):
+        pass
+
+    def render(self, display):
+        pass
+
+
 class Wind:
-    pass
+    def __init__(self, position):
+        pass
+
+    def update(self):
+        pass
+
+    def render(self, display):
+        pass
 
 
 class Slab:
@@ -267,11 +355,11 @@ def check_collision_x(goat, entities):
         if goat.rect.colliderect(slab.rect):
 
             # player collides with a platform on their right
-            if slab.rect.left < goat.rect.right < slab.rect.right:
+            if slab.rect.left <= goat.rect.right <= slab.rect.right:
                 goat.rect.right = slab.rect.left
 
             # player collides with a platform on their left
-            elif slab.rect.left < goat.rect.left < slab.rect.right:
+            elif slab.rect.left <= goat.rect.left <= slab.rect.right:
                 goat.rect.left = slab.rect.right
 
             goat.velocity[0] = 0
@@ -281,11 +369,11 @@ def check_collision_y(goat, entities):
     for slab in entities:
         if goat.rect.colliderect(slab.rect) and goat.velocity[1] > 0:
             # player collides with a platform on their head
-            if slab.rect.top < goat.rect.top < slab.rect.bottom:
+            if slab.rect.top <= goat.rect.top <= slab.rect.bottom:
                 goat.rect.top = slab.rect.bottom
 
             # player collides standing on a platform
-            elif slab.rect.top < goat.rect.bottom < slab.rect.bottom:
+            elif slab.rect.top <= goat.rect.bottom <= slab.rect.bottom:
                 goat.rect.bottom = slab.rect.top
 
             goat.velocity[1] = 0
@@ -315,6 +403,7 @@ def run_game():
     # clock for keeping track of time, ticks, and frames per second
     clock = pygame.time.Clock()
     goat = Goat([64, 143])
+    bridge = Bridge()
     grass_left = Grass((66, 135), alive = False)
     grass_right = Grass((232, 135), alive = True)
     fallthrough_slabs = [
@@ -348,7 +437,10 @@ def run_game():
         display.fill(Color.LIGHT_SKY_BLUE)
         display.blit(WORLD, (0, 0))
 
-        goat.is_grounded = is_entity_on_ground(goat, slabs) or is_entity_on_ground(goat, fallthrough_slabs)
+        goat_on_bridge = not bridge.is_broken and is_entity_on_ground(goat, [bridge])
+        print(goat_on_bridge)
+
+        goat.is_grounded = is_entity_on_ground(goat, slabs) or is_entity_on_ground(goat, fallthrough_slabs) or goat_on_bridge
         if goat.is_grounded:
             goat.velocity[0] = 0
 
@@ -430,10 +522,14 @@ def run_game():
         # update
         goat.rect.x += goat.velocity[0]
         check_collision_x(goat, slabs)
+        if not bridge.is_broken:
+            check_collision_x(goat, [bridge])
         handle_fallthrough_collision_x(goat, fallthrough_slabs)
 
         goat.rect.y += goat.velocity[1]
         check_collision_y(goat, slabs)
+        if not bridge.is_broken:
+            check_collision_y(goat, [bridge])
         handle_fallthrough_collision_y(goat, fallthrough_slabs)
 
         goat.position[0] = goat.rect.x
@@ -442,6 +538,7 @@ def run_game():
         goat.update()
         grass_left.update()
         grass_right.update()
+        bridge.update()
 
         # for slab in slabs:
         #     slab.render(display)
@@ -452,7 +549,7 @@ def run_game():
         goat.render(display)
         grass_left.render(display)
         grass_right.render(display)
-
+        bridge.render(display)
         pygame.display.flip()
 
 
